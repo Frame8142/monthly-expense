@@ -23,9 +23,9 @@ monthly-expense/
 
 ## 2) รันเว็บในเครื่อง / ขึ้น GitHub
 - ลองเลย: ดับเบิลคลิก `web/index.html` (โหมดทดลอง มีข้อมูล ก.ย./ต.ค. จากรูปให้แล้ว ใส่ PIN `8142`)
-- ขึ้น GitHub Pages:
-  1. สร้าง repo ใหม่ > อัปโฟลเดอร์ `web/` ทั้งก้อน (หรือทั้ง `monthly-expense/`)
-  2. Settings > Pages > Deploy from branch > `main` + `/web` (หรือ `/root` ถ้าแยก repo) > เปิดลิงก์
+- ขึ้น GitHub Pages (ตั้งไว้แล้ว อัตโนมัติ):
+  1. repo นี้ deploy โฟลเดอร์ `web/` ผ่าน Actions (`Deploy web to GitHub Pages`) ทุกครั้งที่ push ขึ้น `main`
+  2. เปิดลิงก์: https://frame8142.github.io/monthly-expense/
   3. เปิดเว็บ > กด ⚙️ > กรอก Web App URL + API_KEY > บันทึก (เก็บในเครื่องคุณเท่านั้น)
 
 วิธีใช้เว็บ:
