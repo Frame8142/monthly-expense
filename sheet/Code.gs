@@ -65,6 +65,20 @@ function jsonOut(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/** แปลงค่าช่องวันที่เป็น YYYY-MM-DD (กัน Sheets แปลงข้อความเป็นวันที่อัตโนมัติ) */
+function isoDate(v) {
+  if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v)) {
+    var y = v.getFullYear(), m = v.getMonth() + 1, d = v.getDate();
+    return y + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+  }
+  return String(v == null ? '' : v);
+}
+/** แปลงค่าช่องเดือนเป็น YYYY-MM */
+function isoMonth(v) {
+  var s = isoDate(v);
+  return s.length >= 7 ? s.slice(0, 7) : String(v == null ? '' : v);
+}
+
 function doGet(e) {
   try {
     var p = (e && e.parameter) || {};
@@ -142,13 +156,13 @@ function getLedger(month) {
   var vals = sh.getRange(2, 1, sh.getLastRow() - 1, LEDGER_HEADERS.length).getValues();
   var out = [];
   for (var i = 0; i < vals.length; i++) {
-    if (String(vals[i][0]) !== String(month)) continue;
+    if (isoMonth(vals[i][0]) !== String(month)) continue;
     out.push({
-      month: String(vals[i][0]), bill_id: String(vals[i][1]),
+      month: String(month), bill_id: String(vals[i][1]),
       bill_name: String(vals[i][2]), amount: Number(vals[i][3]) || 0,
-      due_date: String(vals[i][4] || ''),
+      due_date: isoDate(vals[i][4]),
       paid: vals[i][5] === true || String(vals[i][5]).toUpperCase() === 'TRUE',
-      paid_at: String(vals[i][6] || '')
+      paid_at: isoDate(vals[i][6])
     });
   }
   return out;
@@ -162,7 +176,7 @@ function getDashboard(months) {
   if (sh && sh.getLastRow() >= 2) {
     var vals = sh.getRange(2, 1, sh.getLastRow() - 1, LEDGER_HEADERS.length).getValues();
     for (var i = 0; i < vals.length; i++) {
-      var m = String(vals[i][0]); if (!m) continue;
+      var m = isoMonth(vals[i][0]); if (!m) continue;
       if (!map[m]) map[m] = { month: m, total: 0, paid: 0, count: 0, paidCount: 0 };
       var amt = Number(vals[i][3]) || 0;
       var isPaid = vals[i][5] === true || String(vals[i][5]).toUpperCase() === 'TRUE';
@@ -259,7 +273,7 @@ function findLedgerRow(month, billId) {
   if (sh.getLastRow() < 2) return -1;
   var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues();
   for (var i = 0; i < vals.length; i++) {
-    if (String(vals[i][0]) === String(month) && String(vals[i][1]) === String(billId)) return i + 2;
+    if (isoMonth(vals[i][0]) === String(month) && String(vals[i][1]) === String(billId)) return i + 2;
   }
   return -1;
 }
