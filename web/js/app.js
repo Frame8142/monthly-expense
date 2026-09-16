@@ -15,6 +15,18 @@
     box.textContent = msg; box.classList.remove('hidden');
   }
 
+  // toast เด้งบอกทุกครั้งที่บันทึกสำเร็จ (ล่างจอ หายเองใน ~2 วินาที)
+  var toastTimer = null;
+  function toast(msg, isErr) {
+    var t = $('toast');
+    if (!t) { if (isErr) showErr(msg); else alert(msg); return; }
+    t.textContent = msg;
+    t.classList.toggle('err', !!isErr);
+    t.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
   function load() {
     $('loading').classList.remove('hidden');
     showErr('');
@@ -44,7 +56,10 @@
         var p = checked
           ? Api.markPaid(state.month, billId, row ? row.amount : 0)
           : Api.unmark(state.month, billId);
-        p.then(function (res) { if (!res.ok) { showErr('บันทึกไม่ได้: ' + res.error); load(); } })
+        p.then(function (res) {
+          if (!res.ok) { showErr('บันทึกไม่ได้: ' + res.error); load(); return; }
+          toast(checked ? 'ติ๊กจ่ายแล้ว ✓' : 'เอาติ๊กออกแล้ว ✓');
+        })
          .catch(function (e) { showErr('บันทึกไม่ได้: ' + e.message); });
       },
       function (billId, amount) {
@@ -52,13 +67,20 @@
         if (row) row.amount = amount;
         Dashboard.renderSummary(state.ledger);
         Api.upsertLedger({ month: state.month, bill_id: billId, amount: amount }).then(function (res) {
-          if (!res.ok) { showErr('แก้ยอดไม่ได้: ' + res.error); load(); }
+          if (!res.ok) { showErr('แก้ยอดไม่ได้: ' + res.error); load(); return; }
+          toast('แก้ยอดแล้ว ✓');
         });
       });
     BillsUI.renderManage(state.bills, fillForm, function (id) {
-      Api.deleteBill(id).then(load);
+      Api.deleteBill(id).then(function (res) {
+        if (!res.ok) return showErr('ลบไม่ได้: ' + res.error);
+        toast('ซ่อนบิลแล้ว ✓'); load();
+      });
     }, function (id) {
-      Api.restoreBill(id).then(load);
+      Api.restoreBill(id).then(function (res) {
+        if (!res.ok) return showErr('คืนชีพไม่ได้: ' + res.error);
+        toast('คืนชีพบิลแล้ว ✓'); load();
+      });
     });
   }
 
@@ -113,6 +135,7 @@
       if (!confirm('ดึงรายชื่อที่ใช้งานอยู่ทั้งหมดมาตั้งเป็นบิลเดือน ' + monthShort(state.month) + ' ใช่ไหม?')) return;
       Api.ensureMonth(state.month).then(function (res) {
         if (!res.ok) return showErr(res.error);
+        toast('ตั้งบิลเดือนนี้แล้ว +' + (res.added || 0) + ' รายการ ✓');
         load();
       });
     });
@@ -125,9 +148,10 @@
         due_day: parseInt($('fDue').value, 10) || CONFIG.DEFAULT_DUE_DAY,
         category: $('fCat').value, note: $('fNote').value.trim()
       };
-      if (!bill.name) return alert('ใส่ชื่อบิลก่อน');
+      if (!bill.name) return toast('ใส่ชื่อบิลก่อน', true);
       Api.upsertBill(bill).then(function (res) {
-        if (!res.ok) return alert('บันทึกไม่ได้: ' + res.error);
+        if (!res.ok) return toast('บันทึกไม่ได้: ' + res.error, true);
+        toast('บันทึกบิลแล้ว ✓');
         clearForm(); load();
       });
     });
@@ -143,7 +167,9 @@
     $('closeSettingsBtn').addEventListener('click', function () { modal.style.display = 'none'; });
     $('saveSettingsBtn').addEventListener('click', function () {
       saveSettings($('sUrl').value, $('sKey').value);
-      modal.style.display = 'none'; load();
+      modal.style.display = 'none';
+      toast('บันทึกการตั้งค่าแล้ว ✓');
+      load();
     });
     $('lockNowBtn').addEventListener('click', function () { modal.style.display = 'none'; Lock.lockNow(); });
 

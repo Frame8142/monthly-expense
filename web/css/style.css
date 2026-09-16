@@ -12,3 +12,13 @@ body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
 .badge-soon { background: #fef3c7; color: #92400e; }
 .badge-ok { background: #dcfce7; color: #15803d; }
 .badge-todo { background: #e2e8f0; color: #475569; }
+/* toast แจ้งบันทึกสำเร็จ (เด้งล่างจอ) */
+#toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+  background: #16a34a; color: #fff; font-weight: 700; font-size: 14px;
+  padding: 10px 20px; border-radius: 9999px; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 60;
+  max-width: 90vw; text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.err { background: #dc2626; }
