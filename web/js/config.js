@@ -4,12 +4,14 @@ var CONFIG = {
   SOON_DAYS: 3,                // เหลือ <=3 วัน = ใกล้ถึง (เหลือง)
   NOTIFY_EMAIL: 'frame8142@gmail.com',
   LS_URL: 'me_apps_script_url',
-  LS_KEY: 'me_api_key'
+  LS_KEY: 'me_api_key',
+  // URL ตั้งต้นของชีท (ฝังไว้เลย ไม่ต้องกรอกใหม่ทุกเครื่อง; ค่าในเครื่องที่เคยบันทึกไว้จะชนะค่านี้)
+  DEFAULT_URL: 'https://script.google.com/macros/s/AKfycbzKG7A4Oy2P7qVB3gVyLk8HMzRarFOgPwJu0qIs-YLb-ovrqppblNlTy-9AaPidKVRe/exec'
 };
 
 function getSettings() {
   return {
-    url: (localStorage.getItem(CONFIG.LS_URL) || '').trim(),
+    url: (localStorage.getItem(CONFIG.LS_URL) || CONFIG.DEFAULT_URL || '').trim(),
     key: (localStorage.getItem(CONFIG.LS_KEY) || '').trim()
   };
 }
