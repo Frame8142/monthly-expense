@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เตือนค่าใช้จ่ายรายเดือน</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+<!-- ล็อก PIN -->
+<div id="lockScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 px-4">
+  <div class="bg-white rounded-2xl p-6 w-full max-w-xs text-center shadow-xl">
+    <div class="text-4xl mb-2">🔒</div>
+    <h1 class="font-bold text-lg mb-1">ใส่ PIN เพื่อเปิดแอป</h1>
+    <p class="text-xs text-slate-500 mb-4">กันคนอื่นแอบเห็นยอดบิลของคุณ</p>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••"
+      class="w-full text-center text-2xl tracking-[0.5em] border rounded-xl py-2 mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+    <button id="pinBtn" class="w-full bg-blue-600 text-white rounded-xl py-2 font-bold hover:bg-blue-700">ปลดล็อก</button>
+    <p id="pinErr" class="text-red-500 text-sm mt-2 hidden">PIN ไม่ถูก ลองใหม่</p>
+  </div>
+</div>
+
+<div id="app" class="max-w-2xl mx-auto pb-24">
+  <!-- Header -->
+  <header class="bg-white shadow sticky top-0 z-10 px-4 py-3">
+    <div class="flex items-center justify-between">
+      <h1 class="font-bold text-lg">💰 เตือนค่าใช้จ่ายรายเดือน</h1>
+      <button id="settingsBtn" class="text-xl" title="ตั้งค่า">⚙️</button>
+    </div>
+    <!-- เลือกเดือน -->
+    <div class="flex items-center justify-between mt-2">
+      <button id="prevMonth" class="px-3 py-1 bg-slate-200 rounded-lg">‹</button>
+      <div id="monthLabel" class="font-bold">...</div>
+      <button id="nextMonth" class="px-3 py-1 bg-slate-200 rounded-lg">›</button>
+    </div>
+    <!-- Tabs -->
+    <nav class="flex gap-2 mt-3 text-sm">
+      <button data-tab="dash" class="tabBtn flex-1 py-2 rounded-lg font-bold">📋 เดือนนี้</button>
+      <button data-tab="bills" class="tabBtn flex-1 py-2 rounded-lg">🧾 จัดการบิล</button>
+      <button data-tab="history" class="tabBtn flex-1 py-2 rounded-lg">📊 ประวัติ</button>
+    </nav>
+  </header>
+
+  <main class="px-4 pt-4">
+    <!-- สรุปยอด -->
+    <section id="tab-dash">
+      <div id="demoBadge" class="hidden mb-3 text-xs bg-amber-100 border border-amber-300 rounded-lg px-3 py-2">
+        โหมดทดลอง (ยังไม่ต่อ Google Sheet) — ข้อมูลอยู่แค่ในเครื่องนี้ กด ⚙️ เพื่อใส่ Web App URL
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <div class="bg-white rounded-xl p-3 text-center shadow">
+          <div class="text-xs text-slate-500">ต้องจ่าย</div>
+          <div id="sumTotal" class="font-bold text-blue-700">0</div>
+        </div>
+        <div class="bg-white rounded-xl p-3 text-center shadow">
+          <div class="text-xs text-slate-500">จ่ายแล้ว</div>
+          <div id="sumPaid" class="font-bold text-green-600">0</div>
+        </div>
+        <div class="bg-white rounded-xl p-3 text-center shadow">
+          <div class="text-xs text-slate-500">ค้าง</div>
+          <div id="sumUnpaid" class="font-bold text-red-600">0</div>
+        </div>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <button id="ensureBtn" class="flex-1 bg-blue-600 text-white rounded-xl py-2 text-sm font-bold">📥 ตั้งบิลเดือนนี้จากรายชื่อ</button>
+        <button id="addQuickBtn" class="px-4 bg-green-600 text-white rounded-xl py-2 text-sm font-bold">＋</button>
+      </div>
+      <div id="loading" class="text-center text-slate-500 text-sm py-6 hidden">กำลังโหลด...</div>
+      <div id="errBox" class="hidden bg-red-100 border border-red-300 rounded-xl px-3 py-2 text-sm mb-3"></div>
+      <div id="billList" class="space-y-2"></div>
+    </section>
+
+    <!-- จัดการบิล -->
+    <section id="tab-bills" class="hidden">
+      <div class="bg-white rounded-xl p-4 shadow mb-3">
+        <h2 class="font-bold mb-2">เพิ่ม / แก้ไขรายการ (ชื่อสร้างไว้ก่อนได้)</h2>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="fName" placeholder="ชื่อบิล เช่น ค่าไฟ" class="col-span-2 border rounded-lg px-3 py-2">
+          <div>
+            <label class="text-xs text-slate-500">ครบกำหนดวันที่ (1-31, ปกติวันที่ 1)</label>
+            <input id="fDue" type="number" min="1" max="31" value="1" class="w-full border rounded-lg px-3 py-2">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">หมวด</label>
+            <select id="fCat" class="w-full border rounded-lg px-3 py-2">
+              <option>บ้าน</option><option>เน็ต</option><option>มือถือ</option>
+              <option>บัตร</option><option>Subscription</option><option>ช้อปปิ้ง</option><option>อื่นๆ</option>
+            </select>
+          </div>
+          <input id="fNote" placeholder="หมายเหตุ / ช่องทางจ่าย" class="col-span-2 border rounded-lg px-3 py-2">
+        </div>
+        <input id="fId" type="hidden">
+        <div class="flex gap-2 mt-3">
+          <button id="saveBillBtn" class="flex-1 bg-green-600 text-white rounded-lg py-2 font-bold">บันทึก</button>
+          <button id="cancelEditBtn" class="px-4 bg-slate-200 rounded-lg hidden">ยกเลิก</button>
+        </div>
+      </div>
+      <div id="manageList" class="space-y-2"></div>
+    </section>
+
+    <!-- ประวัติ -->
+    <section id="tab-history" class="hidden">
+      <div class="bg-white rounded-xl p-4 shadow">
+        <h2 class="font-bold mb-2">สรุปยอดรายเดือน (เดือนไหนจ่ายกี่บาท)</h2>
+        <div id="historyList" class="space-y-2 text-sm"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Settings modal -->
+<div id="settingsModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-black/50 px-4">
+  <div class="bg-white rounded-2xl p-5 w-full max-w-sm">
+    <h2 class="font-bold mb-3">⚙️ ตั้งค่าการเชื่อมต่อ</h2>
+    <label class="text-xs text-slate-500">Apps Script Web App URL</label>
+    <input id="sUrl" placeholder="https://script.google.com/..." class="w-full border rounded-lg px-3 py-2 mb-2 text-sm">
+    <label class="text-xs text-slate-500">API Key (ตรงกับใน Script Properties)</label>
+    <input id="sKey" placeholder="รหัสลับ" class="w-full border rounded-lg px-3 py-2 mb-2 text-sm">
+    <p class="text-xs text-slate-500 mb-3">เว้นว่าง = โหมดทดลอง เก็บในเครื่องนี้เท่านั้น<br>อีเมลเตือน: frame8142@gmail.com (ตั้งใน GitHub Secrets)</p>
+    <div class="flex gap-2">
+      <button id="saveSettingsBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2 font-bold">บันทึก</button>
+      <button id="closeSettingsBtn" class="px-4 bg-slate-200 rounded-lg">ปิด</button>
+    </div>
+    <button id="lockNowBtn" class="w-full mt-2 text-sm text-slate-500">🔒 ล็อกหน้าจอตอนนี้</button>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/lock.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/bills.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

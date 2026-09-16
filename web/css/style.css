@@ -1,0 +1,14 @@
+/* สไตล์เสริม (หลักใช้ Tailwind CDN) */
+body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
+.tabBtn { background: #e2e8f0; color: #475569; }
+.tabBtn.active { background: #2563eb; color: #fff; }
+.bill-card { transition: transform .05s; }
+.bill-card:active { transform: scale(.99); }
+.tick { width: 26px; height: 26px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0; }
+.dot { width: 10px; height: 10px; border-radius: 9999px; display: inline-block; }
+#pinInput { letter-spacing: .5em; }
+.badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 700; }
+.badge-overdue { background: #fee2e2; color: #b91c1c; }
+.badge-soon { background: #fef3c7; color: #92400e; }
+.badge-ok { background: #dcfce7; color: #15803d; }
+.badge-todo { background: #e2e8f0; color: #475569; }
