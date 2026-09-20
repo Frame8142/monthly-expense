@@ -3,10 +3,17 @@ var CONFIG = {
   DEFAULT_DUE_DAY: 1,
   LS_URL: 'me_apps_script_url',
   LS_KEY: 'me_api_key',
-  DEFAULT_URL: 'https://script.google.com/macros/s/AKfycbzKG7A4Oy2P7qVB3gVyLk8HMzRarFOgPwJu0qIs-YLb-ovrqppblNlTy-9AaPidKVRe/exec'
+  DEFAULT_URL: 'https://script.google.com/macros/s/AKfycbxBzc7hYic-MeKLQEcDznNUFFlHl-zAR-tT8AIM1ppYcmrJCtPE_GGlZunu1v9_zSBn/exec'
 };
 
 function getSettings() {
+  // ย้ายคนที่เคยจำ URL อันเก่าไว้ในเครื่องไป URL ใหม่อัตโนมัติ (ครั้งเดียว)
+  try {
+    var OLD_URL = 'https://script.google.com/macros/s/AKfycbzKG7A4Oy2P7qVB3gVyLk8HMzRarFOgPwJu0qIs-YLb-ovrqppblNlTy-9AaPidKVRe/exec';
+    if ((localStorage.getItem(CONFIG.LS_URL) || '') === OLD_URL) {
+      localStorage.setItem(CONFIG.LS_URL, CONFIG.DEFAULT_URL);
+    }
+  } catch (e) {}
   return {
     url: (localStorage.getItem(CONFIG.LS_URL) || CONFIG.DEFAULT_URL || '').trim(),
     key: (localStorage.getItem(CONFIG.LS_KEY) || '').trim()
