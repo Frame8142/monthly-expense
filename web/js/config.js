@@ -1,11 +1,8 @@
-/* config.js — ค่าตั้งต้น + อ่าน/บันทึกการตั้งค่า */
+/* config.js — ค่าตั้งต้น + helper วันที่/ยอด (เว็บไซต์เวอร์ชันคอม) */
 var CONFIG = {
-  DEFAULT_DUE_DAY: 1,          // รายการส่วนใหญ่จ่ายวันที่ 1
-  SOON_DAYS: 3,                // เหลือ <=3 วัน = ใกล้ถึง (เหลือง)
-  NOTIFY_EMAIL: 'frame8142@gmail.com',
+  DEFAULT_DUE_DAY: 1,
   LS_URL: 'me_apps_script_url',
   LS_KEY: 'me_api_key',
-  // URL ตั้งต้นของชีท (ฝังไว้เลย ไม่ต้องกรอกใหม่ทุกเครื่อง; ค่าในเครื่องที่เคยบันทึกไว้จะชนะค่านี้)
   DEFAULT_URL: 'https://script.google.com/macros/s/AKfycbzKG7A4Oy2P7qVB3gVyLk8HMzRarFOgPwJu0qIs-YLb-ovrqppblNlTy-9AaPidKVRe/exec'
 };
 
@@ -21,17 +18,19 @@ function saveSettings(url, key) {
 }
 function isDemoMode() { return !getSettings().url; }
 
-// ชื่อเดือนไทย (พ.ศ. ย่อแบบในชีทเดิม เช่น ก.ย. 69)
 var TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 var TH_MONTHS_FULL = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
 function monthLabel(month) {
   var p = String(month).split('-');
   var y = parseInt(p[0], 10), m = parseInt(p[1], 10);
+  if (!y || !m) return String(month);
   return TH_MONTHS_FULL[m - 1] + ' ' + (y + 543);
 }
 function monthShort(month) {
   var p = String(month).split('-');
   var y = parseInt(p[0], 10), m = parseInt(p[1], 10);
+  if (!y || !m) return String(month);
   return TH_MONTHS[m - 1] + ' ' + String(y + 543).slice(-2);
 }
 function currentMonth() {
@@ -44,21 +43,23 @@ function shiftMonth(month, n) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
 function fmt(n) { return Number(n || 0).toLocaleString('th-TH', { maximumFractionDigits: 2 }); }
-// วันครบกำหนดของเดือน (ปัด 31 -> สิ้นเดือน)
+function fmtInt(n) { return Number(n || 0).toLocaleString('th-TH'); }
+function parseAmount(v) {
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  var s = String(v == null ? '' : v).replace(/[, ]/g, '');
+  var n = parseFloat(s);
+  return isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : 0;
+}
 function calcDueDate(month, dueDay) {
   var p = String(month).split('-');
   var y = +p[0], m = +p[1];
+  if (!y || !m) return month + '-01';
   var last = new Date(y, m, 0).getDate();
-  var d = Math.min(dueDay || 1, last);
+  var d = Math.min(Math.max(parseInt(dueDay, 10) || 1, 1), last);
   return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
 }
-function fmtDateThai(iso) {
-  if (!iso) return '-';
-  var p = String(iso).slice(0, 10).split('-');
-  return parseInt(p[2], 10) + ' ' + TH_MONTHS[parseInt(p[1], 10) - 1] + ' ' + String(parseInt(p[0], 10) + 543).slice(-2);
-}
-function daysLeft(dueDateIso) {
-  var t = new Date(); t.setHours(0, 0, 0, 0);
-  var d = new Date(String(dueDateIso).slice(0, 10) + 'T00:00:00');
-  return Math.round((d - t) / 86400000);
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
 }

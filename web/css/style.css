@@ -1,18 +1,48 @@
-/* สไตล์เสริม (หลักใช้ Tailwind CDN) */
-body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
-.tabBtn { background: #e2e8f0; color: #475569; }
-.tabBtn.active { background: #2563eb; color: #fff; }
-.bill-card { transition: transform .05s; }
-.bill-card:active { transform: scale(.99); }
-.tick { width: 26px; height: 26px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0; }
-.dot { width: 10px; height: 10px; border-radius: 9999px; display: inline-block; }
-#pinInput { letter-spacing: .5em; }
-.badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 700; }
-.badge-overdue { background: #fee2e2; color: #b91c1c; }
-.badge-soon { background: #fef3c7; color: #92400e; }
+/* เว็บไซต์ค่าใช้จ่ายรายเดือน — desktop-first */
+body { font-family: "Sarabun", system-ui, "Segoe UI", Tahoma, sans-serif; }
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* สถานะเชื่อมต่อ */
+.conn-light { width: 10px; height: 10px; border-radius: 9999px; display: inline-block; background: #f59e0b; }
+.conn-light.ok { background: #16a34a; }
+.conn-light.err { background: #dc2626; }
+
+/* badge */
+.badge { font-size: 12px; padding: 3px 10px; border-radius: 9999px; font-weight: 700; white-space: nowrap; }
 .badge-ok { background: #dcfce7; color: #15803d; }
 .badge-todo { background: #e2e8f0; color: #475569; }
-/* toast แจ้งบันทึกสำเร็จ (เด้งล่างจอ) */
+.badge-warn { background: #fef3c7; color: #92400e; }
+.badge-old { background: #f1f5f9; color: #64748b; }
+
+/* ตาราง */
+#billBody tr { border-top: 1px solid #f1f5f9; }
+#billBody tr.paid { background: #f0fdf4; }
+#billBody tr.paid:hover { background: #dcfce7; }
+#billBody tr:not(.paid):hover { background: #f8fafc; }
+#billBody td { vertical-align: middle; }
+
+.tick { width: 24px; height: 24px; accent-color: #16a34a; cursor: pointer; }
+.tick:disabled { cursor: not-allowed; opacity: .5; }
+
+.amt-input {
+  width: 130px; text-align: right; font-weight: 700;
+  border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 10px;
+  background: #fff;
+}
+.amt-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+.amt-input:disabled { background: #f8fafc; color: #94a3b8; }
+
+.row-btn { font-size: 12px; padding: 4px 10px; border-radius: 8px; font-weight: 700; }
+.row-btn:hover { filter: brightness(.95); }
+.btn-edit { background: #f1f5f9; color: #334155; }
+.btn-del { background: #fee2e2; color: #b91c1c; }
+
+/* modal */
+.modal { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.45); padding: 16px; }
+.modal.hidden { display: none; }
+.modal-card { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+
+/* toast */
 #toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
   background: #16a34a; color: #fff; font-weight: 700; font-size: 14px;
@@ -22,3 +52,13 @@ body { font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 #toast.err { background: #dc2626; }
+
+/* ประวัติแบบพับได้ */
+.hist-detail { background: #f8fafc; border-radius: 10px; }
+.hist-row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px dashed #e2e8f0; }
+.hist-row:first-child { border-top: none; }
+
+/* responsive: มือถือให้ตารางเลื่อนได้ การ์ดเรียง 1 คอลัมน์ (tailwind จัดการหลัก) */
+@media (max-width: 640px) {
+  .amt-input { width: 110px; }
+}

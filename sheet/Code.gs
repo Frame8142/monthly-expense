@@ -114,7 +114,20 @@ function doPost(e) {
     if (action === 'restoreBill') { setBillActive(body.id, true); return jsonOut({ ok: true }); }
     if (action === 'ensureMonth') {
       if (!body.month) return jsonOut({ ok: false, error: 'month required' });
-      return jsonOut({ ok: true, month: body.month, added: ensureMonth(body.month) });
+      return jsonOut({ ok: true, month: body.month, added: ensureMonth(body.month, body.sourceMonth || '') });
+    }
+    if (action === 'copyPrevMonth') {
+      if (!body.month) return jsonOut({ ok: false, error: 'month required' });
+      return jsonOut({ ok: true, month: body.month, result: copyPrevMonth(body.month) });
+    }
+    if (action === 'addBillToMonth') {
+      if (!body.month || !body.name) return jsonOut({ ok: false, error: 'month + name required' });
+      return jsonOut({ ok: true, result: addBillToMonth(body.month, body.name, Number(body.amount) || 0) });
+    }
+    if (action === 'deleteLedgerRow') {
+      if (!body.month || !body.bill_id) return jsonOut({ ok: false, error: 'month + bill_id required' });
+      deleteLedgerRow(body.month, body.bill_id);
+      return jsonOut({ ok: true });
     }
     if (action === 'upsertLedger') return jsonOut({ ok: true, row: upsertLedger(body.row || {}) });
     if (action === 'markPaid') return jsonOut({ ok: true, row: markPaid(body.month, body.bill_id, body.paid_amount) });
@@ -202,7 +215,22 @@ function nextBillId() {
     var m = /^b(\d+)$/.exec(b.id || '');
     if (m) max = Math.max(max, parseInt(m[1], 10));
   });
-  return 'b' + ('0' + (max + 1)).slice(-2);
+  var n = max + 1;
+  return 'b' + (n < 10 ? '0' + n : String(n));
+}
+
+/** หาเดือนล่าสุดที่มีข้อมูลก่อนหน้า target (เช่น ทำ ต.ค. -> ได้ ก.ย.) */
+function findPrevMonth(target) {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LEDGER_SHEET);
+  if (!sh || sh.getLastRow() < 2) return '';
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
+  var best = '';
+  for (var i = 0; i < vals.length; i++) {
+    var m = isoMonth(vals[i][0]);
+    if (!m) continue;
+    if (m < String(target) && m > best) best = m;
+  }
+  return best;
 }
 
 function upsertBill(bill) {
@@ -253,19 +281,79 @@ function calcDueDate(month, dueDay) {
   return y + '-' + pad(m) + '-' + pad(d);
 }
 
-/** ขึ้นเดือนใหม่: ลอกชื่อบิลที่ active มาเป็นแถว Ledger (ไม่สร้างซ้ำ) */
-function ensureMonth(month) {
-  var bills = getBills(false);
+/** ขึ้นเดือนใหม่แบบ ก.: ลอกชื่อ+ยอดจากเดือนก่อน (คงอันล่าสุดไว้)
+ *  - ถ้ามี sourceMonth ให้ใช้เดือนนั้น ถ้าไม่ระบุหาเดือนล่าสุด < month อัตโนมัติ
+ *  - copy bill_name + amount มาทั้งดุ้น, paid=false เสมอ (ต้องติ๊กใหม่)
+ *  - ถ้าไม่มีเดือนก่อนเลย fallback ไป Bills(active) ยอด 0 (ของเดิม)
+ *  - ไม่สร้างซ้ำ bill_id ที่มีอยู่แล้วในเดือนเป้าหมาย
+ */
+function ensureMonth(month, sourceMonth) {
   var existing = {};
   getLedger(month).forEach(function (r) { existing[r.bill_id] = true; });
+  var src = sourceMonth || findPrevMonth(month);
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LEDGER_SHEET);
   var added = 0;
+
+  if (src) {
+    var prevRows = getLedger(src);
+    var billsById = {};
+    getBills(true).forEach(function (b) { billsById[b.id] = b; });
+    prevRows.forEach(function (r) {
+      if (existing[r.bill_id]) return;
+      var b = billsById[r.bill_id];
+      var due = calcDueDate(month, b ? b.due_day : parseInt(String(r.due_date).slice(8, 10), 10) || 1);
+      sh.appendRow([month, r.bill_id, r.bill_name, Number(r.amount) || 0, due, false, '']);
+      added++;
+    });
+    // เติมบิลใหม่ใน Bills ที่ยังไม่มีในเดือนก่อนด้วย (กันตกหล่น)
+    getBills(false).forEach(function (b) {
+      if (existing[b.id]) return;
+      var already = false;
+      prevRows.forEach(function (r) { if (r.bill_id === b.id) already = true; });
+      if (already) return;
+      // เช็คว่าเพิ่งเพิ่มข้างบนไปหรือยัง
+      var cur = getLedger(month);
+      for (var i = 0; i < cur.length; i++) if (cur[i].bill_id === b.id) return;
+      sh.appendRow([month, b.id, b.name, 0, calcDueDate(month, b.due_day), false, '']);
+      added++;
+    });
+    return added;
+  }
+
+  var bills = getBills(false);
   bills.forEach(function (b) {
     if (existing[b.id]) return;
     sh.appendRow([month, b.id, b.name, 0, calcDueDate(month, b.due_day), false, '']);
     added++;
   });
   return added;
+}
+
+/** ลอกเดือนก่อนแบบรายงานผล (ให้เว็บโชว์ว่าเอามาจากเดือนไหน กี่รายการ) */
+function copyPrevMonth(month) {
+  var src = findPrevMonth(month);
+  if (!src) {
+    var added = ensureMonth(month, '');
+    return { sourceMonth: '', added: added };
+  }
+  var added2 = ensureMonth(month, src);
+  return { sourceMonth: src, added: added2 };
+}
+
+/** เพิ่มบิลใหม่ในเดือนนั้น + จำใน Bills (เดือนหน้าลอกไปด้วย = คงอันล่าสุดไว้) */
+function addBillToMonth(month, name, amount) {
+  if (!name) throw new Error('name required');
+  var bill = upsertBill({ name: String(name).trim(), due_day: 1, category: 'อื่นๆ', note: '', color: 'gray' });
+  upsertLedger({ month: month, bill_id: bill.id, bill_name: bill.name, amount: Number(amount) || 0, paid: false });
+  return { bill_id: bill.id, bill_name: bill.name, amount: Number(amount) || 0 };
+}
+
+/** ลบเฉพาะแถวในเดือนนั้น (ไม่แตะเดือนก่อน/รายการหลัก) */
+function deleteLedgerRow(month, billId) {
+  var r = findLedgerRow(month, billId);
+  if (r === -1) throw new Error('row not found: ' + month + '/' + billId);
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LEDGER_SHEET);
+  sh.deleteRow(r);
 }
 
 function findLedgerRow(month, billId) {

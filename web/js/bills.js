@@ -1,36 +1,39 @@
-/* bills.js — จัดการรายชื่อบิล (เพิ่ม/แก้/ลบแบบซ่อน) */
+/* bills.js — รายการหลักล่าสุด (template สำหรับลอกเดือนหน้า) */
 var BillsUI = (function () {
-  function renderManage(bills, onEdit, onDelete, onRestore) {
-    var box = document.getElementById('manageList');
-    var active = bills.filter(function (b) { return b.active; });
-    var hidden = bills.filter(function (b) { return !b.active; });
+  function renderTemplate(bills, handlers) {
+    handlers = handlers || {};
+    var box = document.getElementById('templateList');
+    var active = (bills || []).filter(function (b) { return b.active; });
+    var hidden = (bills || []).filter(function (b) { return !b.active; });
+
     function card(b) {
-      return '<div class="bg-white rounded-xl p-3 shadow flex items-center gap-2">' +
-        '<div class="flex-1"><div class="font-bold">' + esc(b.name) + '</div>' +
-        '<div class="text-xs text-slate-500">ทุกวันที่ ' + b.due_day + ' · ' + esc(b.category || '') + (b.note ? ' · ' + esc(b.note) : '') + '</div></div>' +
+      return '<div class="border rounded-xl px-3 py-2 flex items-center gap-2 ' + (b.active ? '' : 'opacity-60 bg-slate-50') + '">' +
+        '<div class="flex-1 min-w-0"><div class="font-bold truncate">' + esc(b.name) + '</div>' +
+        '<div class="text-xs text-slate-400">' + esc(b.id || '') + '</div></div>' +
         (b.active
-          ? '<button data-edit="' + b.id + '" class="px-3 py-1 bg-slate-200 rounded-lg text-sm">แก้</button>' +
-            '<button data-del="' + b.id + '" class="px-3 py-1 bg-red-100 text-red-700 rounded-lg text-sm">ลบ</button>'
-          : '<button data-restore="' + b.id + '" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm">คืนชีพ</button>') +
+          ? '<button class="row-btn btn-edit" data-tedit="' + esc(b.id) + '">แก้</button>' +
+            '<button class="row-btn btn-del" data-tdel="' + esc(b.id) + '">ซ่อน</button>'
+          : '<button class="row-btn btn-edit" data-trestore="' + esc(b.id) + '">คืน</button>') +
       '</div>';
     }
-    box.innerHTML =
-      '<div class="text-xs text-slate-500 mb-1">ใช้งานอยู่ (' + active.length + ')</div>' +
-      (active.map(card).join('') || '<div class="text-sm text-slate-400">ยังไม่มี</div>') +
-      (hidden.length ? '<div class="text-xs text-slate-500 mt-3 mb-1">ซ่อนอยู่ (ประวัติเก่ายังอยู่) (' + hidden.length + ')</div>' + hidden.map(card).join('') : '');
 
-    box.querySelectorAll('[data-edit]').forEach(function (btn) {
-      btn.addEventListener('click', function () { onEdit(btn.getAttribute('data-edit')); });
+    box.innerHTML =
+      '<div class="text-xs text-slate-400 mb-1">ใช้งานอยู่ (' + active.length + ')</div>' +
+      (active.map(card).join('') || '<div class="text-sm text-slate-400">ยังไม่มี — เพิ่มด้านบนได้เลย</div>') +
+      (hidden.length ? '<div class="text-xs text-slate-400 mt-3 mb-1">ซ่อนอยู่ (' + hidden.length + ') — ประวัติเก่ายังอยู่</div>' + hidden.map(card).join('') : '');
+
+    box.querySelectorAll('[data-tedit]').forEach(function (btn) {
+      btn.addEventListener('click', function () { handlers.onEdit && handlers.onEdit(btn.getAttribute('data-tedit')); });
     });
-    box.querySelectorAll('[data-del]').forEach(function (btn) {
+    box.querySelectorAll('[data-tdel]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (confirm('ซ่อนบิลนี้จากเดือนใหม่? (ประวัติเดือนเก่าไม่หาย)')) onDelete(btn.getAttribute('data-del'));
+        if (confirm('ซ่อน “' + btn.getAttribute('data-tdel') + '” จากรายการหลัก?\n(เดือนเก่าไม่หาย แต่เดือนหน้าจะไม่ลอกไป)')) handlers.onDelete && handlers.onDelete(btn.getAttribute('data-tdel'));
       });
     });
-    box.querySelectorAll('[data-restore]').forEach(function (btn) {
-      btn.addEventListener('click', function () { onRestore(btn.getAttribute('data-restore')); });
+    box.querySelectorAll('[data-trestore]').forEach(function (btn) {
+      btn.addEventListener('click', function () { handlers.onRestore && handlers.onRestore(btn.getAttribute('data-trestore')); });
     });
   }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  return { renderManage: renderManage };
+
+  return { renderTemplate: renderTemplate };
 })();
