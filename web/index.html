@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧾</text></svg>">
   <link rel="stylesheet" href="css/style.css">
 
 </head>
@@ -18,11 +19,18 @@
 <header class="hydro-header sticky top-0 z-20">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center gap-3 sm:gap-4">
     <div class="flex items-center gap-3">
-      <div class="brand-droplet" aria-hidden="true">💧</div>
+      <div class="brand-droplet" aria-hidden="true" title="จ่ายบิล">
+        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
+          <path d="M14 8H8"/>
+          <path d="M16 12H8"/>
+          <path d="m9 16 2 2 4-4"/>
+        </svg>
+      </div>
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 leading-tight">ค่าใช้จ่ายรายเดือน</h1>
-          <span class="hidden sm:inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-700">Hydro Flow</span>
+          <span class="hidden sm:inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-700">Bill Pay</span>
         </div>
         <p class="text-xs text-slate-500 leading-tight mt-0.5">ลอกเดือนก่อนมา แก้ยอดนิดหน่อย ติ๊กจ่าย จบ</p>
       </div>
@@ -63,7 +71,7 @@
     <div class="hydro-card kpi-card kpi-hero p-5 sm:p-6">
       <div class="flex items-center justify-between gap-2 relative z-10">
         <div class="text-sm font-semibold text-sky-100">ยอดตามบิล <span class="text-xs opacity-80">(เตรียมเงินทั้งเดือน)</span></div>
-        <div class="kpi-icon-box bg-white/20 text-white backdrop-blur-sm">💧</div>
+        <div class="kpi-icon-box bg-white/20 text-white backdrop-blur-sm">🧾</div>
       </div>
       <div id="sumTotal" class="text-3xl sm:text-4xl font-extrabold text-white mt-3 tabular-nums tracking-tight relative z-10">0</div>
       <div class="flex items-center justify-between mt-2 relative z-10">
@@ -345,7 +353,7 @@
 
         <!-- empty state -->
         <div id="emptyBox" class="hidden px-6 py-12 text-center">
-          <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-3xl">💧</div>
+          <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-3xl">🧾</div>
           <p class="font-extrabold text-base text-slate-800">เดือนนี้ยังไม่มีรายการบิล</p>
           <p class="text-xs sm:text-sm text-slate-500 mt-1 mb-5 max-w-md mx-auto">กดปุ่มด้านล่างเพื่อลอกชื่อและยอดจากเดือนล่าสุดมาตั้งต้น แล้วค่อยปรับแก้ยอดที่เปลี่ยน</p>
           <button id="emptyCopyBtn" class="px-5 py-2.5 btn-aqua text-sm font-bold rounded-xl">📋 ลอกเดือนที่แล้วมาเลย</button>
