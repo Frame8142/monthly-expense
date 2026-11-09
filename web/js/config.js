@@ -1,6 +1,4 @@
-/* =========================================================
-   1. config.js — ค่าตั้งต้น + helper วันที่/ยอด
-   ========================================================= */
+/* config.js — ค่าตั้งต้น + helper วันที่/ยอด (เว็บไซต์เวอร์ชันคอม) */
 var CONFIG = {
   DEFAULT_DUE_DAY: 1,
   LS_URL: 'me_apps_script_url',
@@ -8,36 +6,26 @@ var CONFIG = {
   DEFAULT_URL: 'https://script.google.com/macros/s/AKfycbxKZU-2ICz7Zglur0QfunhHfMyqxLjh9SMDQYkVdhSX5pH0U_-L4XQ1LYM3jGiiRmZb/exec'
 };
 
-function safeGetLS(k) {
-  try { return localStorage.getItem(k); } catch (e) { return null; }
-}
-function safeSetLS(k, v) {
-  try { localStorage.setItem(k, v); } catch (e) {}
-}
-function safeRemoveLS(k) {
-  try { localStorage.removeItem(k); } catch (e) {}
-}
-
 function getSettings() {
+  // ย้ายคนที่เคยจำ URL อันเก่าไว้ในเครื่องไป URL ใหม่อัตโนมัติ (ครั้งเดียว)
   try {
     var OLD_URLS = [
       'https://script.google.com/macros/s/AKfycbzKG7A4Oy2P7qVB3gVyLk8HMzRarFOgPwJu0qIs-YLb-ovrqppblNlTy-9AaPidKVRe/exec',
       'https://script.google.com/macros/s/AKfycbxBzc7hYic-MeKLQEcDznNUFFlHl-zAR-tT8AIM1ppYcmrJCtPE_GGlZunu1v9_zSBn/exec'
     ];
-    var cur = safeGetLS(CONFIG.LS_URL) || '';
+    var cur = (localStorage.getItem(CONFIG.LS_URL) || '').trim();
     if (OLD_URLS.indexOf(cur) !== -1) {
-      safeSetLS(CONFIG.LS_URL, CONFIG.DEFAULT_URL);
+      localStorage.setItem(CONFIG.LS_URL, CONFIG.DEFAULT_URL);
     }
   } catch (e) {}
-  var storedUrl = safeGetLS(CONFIG.LS_URL);
   return {
-    url: (storedUrl !== null ? storedUrl : CONFIG.DEFAULT_URL || '').trim(),
-    key: (safeGetLS(CONFIG.LS_KEY) || '').trim()
+    url: (localStorage.getItem(CONFIG.LS_URL) || CONFIG.DEFAULT_URL || '').trim(),
+    key: (localStorage.getItem(CONFIG.LS_KEY) || '').trim()
   };
 }
 function saveSettings(url, key) {
-  safeSetLS(CONFIG.LS_URL, (url || '').trim());
-  safeSetLS(CONFIG.LS_KEY, (key || '').trim());
+  localStorage.setItem(CONFIG.LS_URL, (url || '').trim());
+  localStorage.setItem(CONFIG.LS_KEY, (key || '').trim());
 }
 function isDemoMode() { return !getSettings().url; }
 

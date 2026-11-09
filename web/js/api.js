@@ -1,12 +1,57 @@
-/* =========================================================
-   2. api.js — คุยกับ Google Sheet ผ่าน Apps Script + โหมดทดลองในเครื่อง
-   ========================================================= */
+/* api.js — คุยกับ Google Sheet ผ่าน Apps Script + โหมดทดลองในเครื่อง */
+var Api = (function () {
+  function settings() { return getSettings(); }
+
+  function get(action, params) {
+    var s = settings();
+    params = params || {};
+    if (!s.url) return Promise.resolve(LocalStore.handleGet(action, params));
+    var q = Object.keys(params).map(function (k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    var url = s.url + '?key=' + encodeURIComponent(s.key) + '&action=' + action + (q ? '&' + q : '');
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  function post(action, payload) {
+    var s = settings();
+    payload = payload || {};
+    if (!s.url) return Promise.resolve(LocalStore.handlePost(action, payload));
+    return fetch(s.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(Object.assign({ key: s.key, action: action }, payload))
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  return {
+    ping: function () { return get('ping', {}); },
+    listBills: function (inc) { return get('listBills', inc ? { includeInactive: '1' } : {}); },
+    getLedger: function (month) { return get('getLedger', { month: month }); },
+    dashboard: function (n) { return get('dashboard', { months: n || 12 }); },
+    upsertBill: function (bill) { return post('upsertBill', { bill: bill }); },
+    deleteBill: function (id) { return post('deleteBill', { id: id }); },
+    restoreBill: function (id) { return post('restoreBill', { id: id }); },
+    ensureMonth: function (month, sourceMonth) { return post('ensureMonth', { month: month, sourceMonth: sourceMonth || '' }); },
+    copyPrevMonth: function (month) { return post('copyPrevMonth', { month: month }); },
+    addBillToMonth: function (month, name, amount) { return post('addBillToMonth', { month: month, name: name, amount: amount }); },
+    deleteLedgerRow: function (month, bill_id) { return post('deleteLedgerRow', { month: month, bill_id: bill_id }); },
+    upsertLedger: function (row) { return post('upsertLedger', { row: row }); },
+    markPaid: function (month, bill_id, paid_amount) { return post('markPaid', { month: month, bill_id: bill_id, paid_amount: paid_amount }); },
+    unmark: function (month, bill_id) { return post('unmark', { month: month, bill_id: bill_id }); }
+  };
+})();
+
+/* โหมดทดลอง: mirror logic ฝั่ง Sheet (ลอกเดือนแบบ ก. + ประวัติแยกเดือน) */
 var LocalStore = (function () {
   var KB = 'me_demo_bills', KL = 'me_demo_ledger';
-  var memBills = null, memLedger = null;
-
   function seed() {
-    if (safeGetLS(KB) || memBills) return;
+    if (localStorage.getItem(KB)) return;
     var bills = [
       { id: 'b01', name: 'ค่าน้ำบ้าน', due_day: 1, category: 'บ้าน', note: '', color: 'blue', active: true },
       { id: 'b02', name: 'ค่าเน็ตบ้าน', due_day: 10, category: 'เน็ต', note: '', color: 'green', active: true },
@@ -20,34 +65,16 @@ var LocalStore = (function () {
     ];
     var sep = [3100, 315.65, 640.93, 1870, 600, 65, 1020, 800, 1000];
     var ledger = [];
-    var curM = currentMonth();
     bills.forEach(function (b, i) {
       ledger.push({ month: '2026-09', bill_id: b.id, bill_name: b.name, amount: sep[i], due_date: calcDueDate('2026-09', b.due_day), paid: true, paid_at: '2026-09-05' });
-      if (curM !== '2026-09') {
-        ledger.push({ month: curM, bill_id: b.id, bill_name: b.name, amount: sep[i], due_date: calcDueDate(curM, b.due_day), paid: i < 4, paid_at: i < 4 ? curM + '-05' : '' });
-      }
     });
-    memBills = bills;
-    memLedger = ledger;
-    safeSetLS(KB, JSON.stringify(bills));
-    safeSetLS(KL, JSON.stringify(ledger));
+    localStorage.setItem(KB, JSON.stringify(bills));
+    localStorage.setItem(KL, JSON.stringify(ledger));
   }
-  function bills() {
-    seed();
-    try {
-      var raw = safeGetLS(KB);
-      return raw ? JSON.parse(raw) : (memBills || []);
-    } catch (e) { return memBills || []; }
-  }
-  function ledger() {
-    seed();
-    try {
-      var raw = safeGetLS(KL);
-      return raw ? JSON.parse(raw) : (memLedger || []);
-    } catch (e) { return memLedger || []; }
-  }
-  function saveB(b) { memBills = b; safeSetLS(KB, JSON.stringify(b)); }
-  function saveL(l) { memLedger = l; safeSetLS(KL, JSON.stringify(l)); }
+  function bills() { seed(); try { return JSON.parse(localStorage.getItem(KB)) || []; } catch (e) { return []; } }
+  function ledger() { seed(); try { return JSON.parse(localStorage.getItem(KL)) || []; } catch (e) { return []; } }
+  function saveB(b) { localStorage.setItem(KB, JSON.stringify(b)); }
+  function saveL(l) { localStorage.setItem(KL, JSON.stringify(l)); }
   function nextId(B) {
     var max = 0;
     B.forEach(function (x) { var m = /^b(\d+)$/.exec(x.id || ''); if (m) max = Math.max(max, +m[1]); });
@@ -94,7 +121,7 @@ var LocalStore = (function () {
   }
 
   return {
-    reset: function () { memBills = null; memLedger = null; safeRemoveLS(KB); safeRemoveLS(KL); seed(); },
+    reset: function () { localStorage.removeItem(KB); localStorage.removeItem(KL); seed(); },
     handleGet: function (action, p) {
       if (action === 'ping') return { ok: true, time: new Date().toISOString() };
       if (action === 'listBills') {
@@ -200,71 +227,5 @@ var LocalStore = (function () {
       }
       return { ok: false, error: 'unknown action' };
     }
-  };
-})();
-
-var Api = (function () {
-  var fallbackDemo = false;
-  function settings() { return getSettings(); }
-
-  function get(action, params) {
-    var s = settings();
-    params = params || {};
-    if (!s.url || fallbackDemo) return Promise.resolve(LocalStore.handleGet(action, params));
-    var q = Object.keys(params).map(function (k) {
-      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    }).join('&');
-    var url = s.url + '?key=' + encodeURIComponent(s.key) + '&action=' + action + (q ? '&' + q : '');
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function (res) {
-      if (res && !res.ok && action !== 'ping' && !s.key) {
-        fallbackDemo = true;
-        return LocalStore.handleGet(action, params);
-      }
-      return res;
-    }).catch(function (err) {
-      if (action !== 'ping') {
-        fallbackDemo = true;
-        return LocalStore.handleGet(action, params);
-      }
-      throw err;
-    });
-  }
-  function post(action, payload) {
-    var s = settings();
-    payload = payload || {};
-    if (!s.url || fallbackDemo) return Promise.resolve(LocalStore.handlePost(action, payload));
-    return fetch(s.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(Object.assign({ key: s.key, action: action }, payload))
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).catch(function () {
-      fallbackDemo = true;
-      return LocalStore.handlePost(action, payload);
-    });
-  }
-
-  return {
-    isUsingFallback: function () { return fallbackDemo || isDemoMode(); },
-    clearFallback: function () { fallbackDemo = false; },
-    ping: function () { fallbackDemo = false; return get('ping', {}); },
-    listBills: function (inc) { return get('listBills', inc ? { includeInactive: '1' } : {}); },
-    getLedger: function (month) { return get('getLedger', { month: month }); },
-    dashboard: function (n) { return get('dashboard', { months: n || 12 }); },
-    upsertBill: function (bill) { return post('upsertBill', { bill: bill }); },
-    deleteBill: function (id) { return post('deleteBill', { id: id }); },
-    restoreBill: function (id) { return post('restoreBill', { id: id }); },
-    ensureMonth: function (month, sourceMonth) { return post('ensureMonth', { month: month, sourceMonth: sourceMonth || '' }); },
-    copyPrevMonth: function (month) { return post('copyPrevMonth', { month: month }); },
-    addBillToMonth: function (month, name, amount) { return post('addBillToMonth', { month: month, name: name, amount: amount }); },
-    deleteLedgerRow: function (month, bill_id) { return post('deleteLedgerRow', { month: month, bill_id: bill_id }); },
-    upsertLedger: function (row) { return post('upsertLedger', { row: row }); },
-    markPaid: function (month, bill_id, paid_amount) { return post('markPaid', { month: month, bill_id: bill_id, paid_amount: paid_amount }); },
-    unmark: function (month, bill_id) { return post('unmark', { month: month, bill_id: bill_id }); }
   };
 })();
