@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 bills-*.pdf
 demo.pdf
+index (1).html
+index*.html
+

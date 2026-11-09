@@ -1,155 +1,401 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ค่าใช้จ่ายรายเดือน — เว็บดูบิลรายเดือน</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ค่าใช้จ่ายรายเดือน — เว็บดูบิลรายเดือน</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800">
+<body class="min-h-screen">
 
 <!-- ===== Top bar เว็บไซต์ ===== -->
-<header class="bg-white border-b sticky top-0 z-20">
-  <div class="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4">
-    <div class="flex items-center gap-2">
-      <span class="text-2xl">💰</span>
+<header class="hydro-header sticky top-0 z-20">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center gap-3 sm:gap-4">
+    <div class="flex items-center gap-3">
+      <div class="brand-droplet" aria-hidden="true">💧</div>
       <div>
-        <h1 class="font-extrabold text-lg leading-tight">ค่าใช้จ่ายรายเดือน</h1>
-        <p class="text-xs text-slate-500 leading-tight">ลอกเดือนก่อนมา แก้ยอดนิดหน่อย ติ๊กจ่าย จบ</p>
+        <div class="flex items-center gap-2">
+          <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 leading-tight">ค่าใช้จ่ายรายเดือน</h1>
+          <span class="hidden sm:inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-700">Hydro Flow</span>
+        </div>
+        <p class="text-xs text-slate-500 leading-tight mt-0.5">ลอกเดือนก่อนมา แก้ยอดนิดหน่อย ติ๊กจ่าย จบ</p>
       </div>
     </div>
+
     <div class="flex-1"></div>
-    <div id="connDot" class="hidden md:flex items-center gap-1 text-xs text-slate-500" title="สถานะการเชื่อมต่อ">
-      <span id="connLight" class="conn-light"></span><span id="connText">โหมดทดลอง</span>
+
+    <div id="connDot" class="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-600 conn-pill" title="สถานะการเชื่อมต่อ">
+      <span id="connLight" class="conn-light"></span>
+      <span id="connText">โหมดทดลอง</span>
     </div>
-    <button id="todayBtn" class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg" title="กลับไปเดือนปัจจุบัน">เดือนนี้</button>
-    <button id="settingsBtn" class="px-3 py-1.5 text-sm bg-slate-800 text-white hover:bg-slate-700 rounded-lg" title="ตั้งค่าการเชื่อมต่อ Google Sheet">⚙️ ตั้งค่า</button>
+
+    <button id="todayBtn" class="px-3.5 py-2 text-xs sm:text-sm font-bold btn-soft rounded-xl" title="กลับไปเดือนปัจจุบัน">
+      📅 เดือนนี้
+    </button>
+    <button id="settingsBtn" class="px-3.5 py-2 text-xs sm:text-sm font-bold btn-navy rounded-xl flex items-center gap-1.5" title="ตั้งค่าการเชื่อมต่อ Google Sheet">
+      <span>⚙️</span><span>ตั้งค่า</span>
+    </button>
   </div>
 </header>
 
-<div class="max-w-6xl mx-auto px-6 py-6">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
 
   <!-- แถบโหมดทดลอง -->
-  <div id="demoBadge" class="hidden mb-4 text-sm bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
-    <b>โหมดทดลอง</b> — ยังไม่ต่อ Google Sheet ข้อมูลอยู่แค่ในเครื่องนี้ (มีข้อมูล ก.ย./ต.ค. ตัวอย่างให้แล้ว)
-    กด <b>⚙️ ตั้งค่า</b> เพื่อใส่ Web App URL ใช้ข้อมูลจริง
+  <div id="demoBadge" class="hidden mb-5 text-xs sm:text-sm bg-white/90 border border-sky-200 shadow-sm rounded-2xl px-4 py-3.5 flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2.5 text-slate-700">
+      <span class="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-base shrink-0">🌊</span>
+      <span>
+        <b class="text-sky-900">โหมดทดลอง</b> — ยังไม่ต่อ Google Sheet ข้อมูลอยู่แค่ในเครื่องนี้ (มีข้อมูลตัวอย่างให้แล้ว)
+        กด <b>⚙️ ตั้งค่า</b> เพื่อใส่ Web App URL ใช้ข้อมูลจริง
+      </span>
+    </div>
   </div>
 
-  <!-- ===== การ์ด 2 ยอด ===== -->
-  <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="bg-white rounded-2xl p-5 shadow-sm border">
-      <div class="text-sm text-slate-500">ยอดตามบิล <span class="text-xs">(เตรียมเงินทั้งเดือน)</span></div>
-      <div id="sumTotal" class="text-3xl font-extrabold text-blue-700 mt-1">0</div>
-      <div id="sumCount" class="text-xs text-slate-500 mt-1">0 รายการ</div>
-    </div>
-    <div class="bg-white rounded-2xl p-5 shadow-sm border">
-      <div class="text-sm text-slate-500">จ่ายไปแล้ว <span class="text-xs">(ติ๊ก ✅ แล้ว)</span></div>
-      <div id="sumPaid" class="text-3xl font-extrabold text-green-600 mt-1">0</div>
-      <div id="sumPaidCount" class="text-xs text-slate-500 mt-1">0/0 บิล</div>
-    </div>
-    <div class="bg-white rounded-2xl p-5 shadow-sm border">
-      <div class="text-sm text-slate-500">ยังค้าง <span class="text-xs">(ต้องจ่ายอีก)</span></div>
-      <div id="sumUnpaid" class="text-3xl font-extrabold text-red-600 mt-1">0</div>
-      <div class="mt-2 h-2 bg-slate-200 rounded-full overflow-hidden">
-        <div id="paidBar" class="h-2 bg-green-500 rounded-full transition-all" style="width:0%"></div>
+  <!-- ===== การ์ด 3 ยอด (สไตล์ Smart Water Tracker) ===== -->
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+    <!-- Card 1: ยอดตามบิล (Hero Aqua Card) -->
+    <div class="hydro-card kpi-card kpi-hero p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-2 relative z-10">
+        <div class="text-sm font-semibold text-sky-100">ยอดตามบิล <span class="text-xs opacity-80">(เตรียมเงินทั้งเดือน)</span></div>
+        <div class="kpi-icon-box bg-white/20 text-white backdrop-blur-sm">💧</div>
       </div>
-      <div id="paidPct" class="text-xs text-slate-500 mt-1">จ่ายแล้ว 0%</div>
+      <div id="sumTotal" class="text-3xl sm:text-4xl font-extrabold text-white mt-3 tabular-nums tracking-tight relative z-10">0</div>
+      <div class="flex items-center justify-between mt-2 relative z-10">
+        <div id="sumCount" class="text-xs font-semibold text-sky-100 bg-white/15 px-2.5 py-1 rounded-full">0 รายการ</div>
+        <span class="text-xs text-sky-100/90">บาท / เดือน</span>
+      </div>
+    </div>
+
+    <!-- Card 2: จ่ายไปแล้ว -->
+    <div class="hydro-card kpi-card p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-sm font-semibold text-slate-500">จ่ายไปแล้ว <span class="text-xs text-slate-400">(ติ๊ก ✅ แล้ว)</span></div>
+        <div class="kpi-icon-box bg-emerald-50 text-emerald-600 border border-emerald-100">✅</div>
+      </div>
+      <div id="sumPaid" class="text-3xl sm:text-4xl font-extrabold text-emerald-600 mt-3 tabular-nums tracking-tight">0</div>
+      <div class="flex items-center justify-between mt-2">
+        <div id="sumPaidCount" class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">0/0 บิล</div>
+        <span class="text-xs text-slate-400">ชำระเรียบร้อย</span>
+      </div>
+    </div>
+
+    <!-- Card 3: ยังค้าง + หลอดระดับน้ำ -->
+    <div class="hydro-card kpi-card p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-2">
+        <div class="text-sm font-semibold text-slate-500">ยังค้าง <span class="text-xs text-slate-400">(ต้องจ่ายอีก)</span></div>
+        <div class="kpi-icon-box bg-rose-50 text-rose-500 border border-rose-100">⏳</div>
+      </div>
+      <div id="sumUnpaid" class="text-3xl sm:text-4xl font-extrabold text-rose-500 mt-3 tabular-nums tracking-tight">0</div>
+      <div class="mt-3 hydro-progress-track">
+        <div id="paidBar" style="width:0%"></div>
+      </div>
+      <div class="flex items-center justify-between mt-1.5">
+        <div id="paidPct" class="text-xs font-bold text-sky-600">จ่ายแล้ว 0%</div>
+        <span class="text-[11px] text-slate-400">ความคืบหน้าเดือนนี้</span>
+      </div>
     </div>
   </section>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+  <!-- ===== แถบสลับมุมมอง (View Switcher) + ปุ่มควบคุมแดชบอร์ด ===== -->
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="view-switcher" role="tablist" aria-label="เลือกมุมมองการแสดงผล">
+      <button type="button" class="view-tab-btn active" data-view-mode="all">
+        <span>✨</span><span>มุมมองทั้งหมด</span>
+      </button>
+      <button type="button" class="view-tab-btn" data-view-mode="dashboard">
+        <span>📊</span><span>แดชบอร์ด & กราฟ</span>
+      </button>
+      <button type="button" class="view-tab-btn" data-view-mode="table">
+        <span>📋</span><span>ตารางจัดการบิล</span>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2 text-xs text-slate-500 bg-white/80 border border-sky-100 px-3.5 py-2 rounded-2xl shadow-sm">
+      <span class="inline-block w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
+      <span>อัปเดตกราฟและระดับน้ำอัตโนมัติตามเดือน <b id="dashActiveMonthText" class="text-sky-700">...</b></span>
+    </div>
+  </div>
+
+  <!-- ===== WOW Interactive Hydro Dashboard Section ===== -->
+  <section id="wowDashboardSection" class="space-y-6 mb-7">
+    <!-- 1. Smart Insight Highlights (4 Mini Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="insight-mini-card">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-1">
+          <span>🔥 บิลสูงสุดเดือนนี้</span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700" id="insMaxBillPct">0% ของรวม</span>
+        </div>
+        <div id="insMaxBillName" class="font-extrabold text-base text-slate-900 truncate">-</div>
+        <div id="insMaxBillAmt" class="text-lg font-extrabold text-sky-600 tabular-nums mt-0.5">0 บาท</div>
+      </div>
+
+      <div class="insight-mini-card">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-1">
+          <span>⚖️ ค่าเฉลี่ยต่อบิล</span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600" id="insBillCountBadge">0 บิล</span>
+        </div>
+        <div id="insAvgAmt" class="text-lg font-extrabold text-slate-900 tabular-nums">0 บาท</div>
+        <div id="insAvgSub" class="text-xs text-slate-500 mt-0.5">คำนวณจากบิลทั้งหมดในเดือนนี้</div>
+      </div>
+
+      <div class="insight-mini-card">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-1">
+          <span>📈 เทียบเดือนก่อนหน้า</span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700" id="insMomBadge">เดือนฐาน</span>
+        </div>
+        <div id="insMomDiff" class="text-lg font-extrabold text-slate-900 tabular-nums">ไม่เปลี่ยนแปลง</div>
+        <div id="insMomSub" class="text-xs text-slate-500 mt-0.5">เทียบยอดรวมกับเดือนก่อน</div>
+      </div>
+
+      <div class="insight-mini-card">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-1">
+          <span>🌊 สถานะ Hydro Flow</span>
+          <span class="text-[11px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-700" id="insHydroBadge">พร้อมใช้งาน</span>
+        </div>
+        <div id="insHydroStatus" class="text-base font-extrabold text-slate-900">รอเริ่มชำระบิล</div>
+        <div id="insHydroSub" class="text-xs text-slate-500 mt-0.5">ติ๊กจ่ายเพื่อเติมระดับน้ำให้เต็ม 100%</div>
+      </div>
+    </div>
+
+    <!-- 2. Liquid Wave Tank + Monthly Trend Chart -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left: Live Animated Liquid Orb Card -->
+      <div class="hydro-card p-5 sm:p-6 flex flex-col justify-between">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div>
+            <h2 class="font-extrabold text-base text-slate-900 flex items-center gap-1.5">
+              <span>💧</span><span>ถังระดับน้ำการชำระบิล</span>
+            </h2>
+            <p class="text-xs text-slate-500">ยิ่งติ๊กจ่าย คลื่นน้ำยิ่งสูงขึ้นสู่เป้าหมาย</p>
+          </div>
+          <span id="orbStatusChip" class="badge badge-todo">0%</span>
+        </div>
+
+        <div class="my-2">
+          <div class="liquid-orb-wrap">
+            <div id="liquidWaveFill" class="liquid-wave-fill" style="height: 0%;"></div>
+            <div id="liquidOrbContent" class="liquid-orb-content">
+              <span class="text-xl mb-0.5">🌊</span>
+              <div id="orbPctText" class="text-3xl font-extrabold tracking-tight tabular-nums">0%</div>
+              <div id="orbSubText" class="text-[11px] font-bold opacity-85 mt-0.5">0 / 0 บิล</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5 mt-4 pt-3 border-t border-sky-100 text-xs">
+          <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-2.5">
+            <div class="text-emerald-700 font-semibold">ชำระแล้ว</div>
+            <div id="orbPaidAmt" class="text-sm font-extrabold text-emerald-700 tabular-nums mt-0.5">0 ฿</div>
+          </div>
+          <div class="bg-rose-50/70 border border-rose-100 rounded-xl p-2.5">
+            <div class="text-rose-600 font-semibold">ค้างชำระ</div>
+            <div id="orbUnpaidAmt" class="text-sm font-extrabold text-rose-600 tabular-nums mt-0.5">0 ฿</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right (2 Cols): Monthly Expense Trend & Paid/Unpaid Chart -->
+      <div class="hydro-card p-5 sm:p-6 lg:col-span-2 flex flex-col justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="font-extrabold text-base text-slate-900 flex items-center gap-1.5">
+              <span>📊</span><span>กราฟแนวโน้มรายจ่าย & สถานะการชำระรายเดือน</span>
+            </h2>
+            <p class="text-xs text-slate-500">เปรียบเทียบยอดจ่ายแล้ว (สีเขียวมิ้นต์) และยอดค้างชำระ (สีชมพูโรส) ย้อนหลังและปัจจุบัน</p>
+          </div>
+          <div class="flex items-center gap-1 bg-sky-50 border border-sky-100 p-1 rounded-xl">
+            <button type="button" id="trendModeBar" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-white text-sky-700 shadow-sm transition">กราฟแท่ง</button>
+            <button type="button" id="trendModeLine" class="px-2.5 py-1 text-xs font-bold rounded-lg text-slate-600 hover:text-sky-700 transition">คลื่นแนวโน้ม</button>
+          </div>
+        </div>
+
+        <div class="chart-box">
+          <canvas id="monthlyTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Category Breakdown Doughnut + Top Bills Horizontal Ranking -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Category Breakdown -->
+      <div class="hydro-card p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="font-extrabold text-base text-slate-900 flex items-center gap-1.5">
+              <span>🍩</span><span>สัดส่วนค่าใช้จ่ายแยกตามหมวดหมู่</span>
+            </h2>
+            <p class="text-xs text-slate-500">วิเคราะห์ว่าเงินเดือนนี้ไหลไปกับหมวดไหนมากที่สุด</p>
+          </div>
+          <span id="catTotalBadge" class="badge badge-todo">0 หมวดหมู่</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+          <div class="chart-box-sm">
+            <canvas id="categoryDoughnutChart"></canvas>
+          </div>
+          <div id="categoryBreakdownList" class="space-y-2 max-h-[220px] overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+
+      <!-- Top Expense Ranking -->
+      <div class="hydro-card p-5 sm:p-6">
+        <div class="flex items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="font-extrabold text-base text-slate-900 flex items-center gap-1.5">
+              <span>🏆</span><span>จัดอันดับรายการบิลสูงสุดในเดือนนี้</span>
+            </h2>
+            <p class="text-xs text-slate-500">รายการบิลที่มียอดสูงสุด 6 อันดับแรก พร้อมสถานะการจ่าย</p>
+          </div>
+          <span class="badge badge-ok">Top 6</span>
+        </div>
+
+        <div class="chart-box-sm">
+          <canvas id="topBillsBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Smart Due-Date Timeline -->
+    <div class="hydro-card p-5 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="font-extrabold text-base text-slate-900 flex items-center gap-1.5">
+            <span>🗓️</span><span>ไทม์ไลน์กำหนดจ่ายบิลประจำเดือน (Due-Date Flow)</span>
+          </h2>
+          <p class="text-xs text-slate-500">จัดกลุ่มบิลตามวันที่ครบกำหนดในเดือน — คลิกที่ชื่อบิลในการ์ดเพื่อติ๊กจ่าย/ยกเลิกได้ทันที</p>
+        </div>
+        <span class="text-xs font-semibold text-sky-700 bg-sky-50 border border-sky-100 px-3 py-1 rounded-full">⚡ คลิกที่บิลเพื่อสลับสถานะจ่ายแล้ว</span>
+      </div>
+
+      <div id="dueTimelineTrack" class="timeline-track"></div>
+    </div>
+  </section>
+
+  <div id="mainWorkspaceGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
     <!-- ===== คอลัมน์หลัก: ตารางเดือน ===== -->
     <main class="lg:col-span-2">
-      <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <div class="hydro-card overflow-hidden">
         <!-- แถบเลือกเดือน + ปุ่ม -->
-        <div class="px-5 py-4 border-b flex flex-wrap items-center gap-2">
-          <button id="prevMonth" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold" title="เดือนก่อน">‹</button>
-          <div class="min-w-0">
-            <div id="monthLabel" class="font-extrabold text-lg leading-tight">...</div>
-            <div id="monthSub" class="text-xs text-slate-500">...</div>
+        <div class="px-5 py-4 border-b border-sky-100 flex flex-wrap items-center gap-2.5 bg-white/60">
+          <div class="flex items-center gap-1.5 bg-sky-50/90 border border-sky-100 p-1 rounded-2xl">
+            <button id="prevMonth" class="w-9 h-9 flex items-center justify-center bg-white hover:bg-sky-100 text-slate-700 rounded-xl font-bold shadow-sm transition" title="เดือนก่อน">‹</button>
+            <div class="px-2.5 min-w-[140px] text-center">
+              <div id="monthLabel" class="font-extrabold text-base sm:text-lg text-slate-900 leading-tight">...</div>
+              <div id="monthSub" class="text-[11px] text-slate-500">...</div>
+            </div>
+            <button id="nextMonth" class="w-9 h-9 flex items-center justify-center bg-white hover:bg-sky-100 text-slate-700 rounded-xl font-bold shadow-sm transition" title="เดือนถัดไป">›</button>
           </div>
-          <button id="nextMonth" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold" title="เดือนถัดไป">›</button>
-          <span id="monthBadge" class="badge badge-todo ml-1">...</span>
+
+          <span id="monthBadge" class="badge badge-todo">...</span>
+
           <div class="flex-1"></div>
-          <button id="copyPrevBtn" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">📋 ลอกเดือนที่แล้วมา</button>
-          <button id="addBillBtn" class="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700">＋ เพิ่มรายการ</button>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="copyPrevBtn" class="px-3.5 py-2 btn-soft text-xs sm:text-sm font-bold rounded-xl flex items-center gap-1.5">
+              <span>📋</span><span>ลอกเดือนที่แล้วมา</span>
+            </button>
+            <button id="addBillBtn" class="px-4 py-2 btn-aqua text-xs sm:text-sm font-bold rounded-xl flex items-center gap-1.5">
+              <span>＋</span><span>เพิ่มรายการ</span>
+            </button>
+          </div>
         </div>
 
         <!-- แบนเนอร์เดือนก่อน (ประวัติแยกเก็บ) -->
-        <div id="pastBanner" class="hidden px-5 py-3 text-sm bg-slate-50 border-b flex flex-wrap items-center gap-2">
-          <span>🗂️ กำลังดู <b id="pastName">เดือนก่อน</b> (ประวัติที่ติ๊กไว้แล้ว แยกเก็บไม่หาย)</span>
-          <span id="lockNote" class="text-xs text-slate-500">ล็อกกันมือลั่น — กดปลดล็อกก่อนแก้</span>
-          <button id="unlockPastBtn" class="ml-auto px-3 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-bold">🔓 ปลดล็อกแก้ไขเดือนนี้</button>
+        <div id="pastBanner" class="hidden px-5 py-3 text-xs sm:text-sm bg-amber-50/90 border-b border-amber-200 flex flex-wrap items-center gap-2">
+          <span class="text-amber-900">🗂️ กำลังดู <b id="pastName">เดือนก่อน</b> (ประวัติที่ติ๊กไว้แล้ว แยกเก็บไม่หาย)</span>
+          <span id="lockNote" class="text-xs text-amber-700">ล็อกกันมือลั่น — กดปลดล็อกก่อนแก้</span>
+          <button id="unlockPastBtn" class="ml-auto px-3 py-1.5 text-xs bg-amber-200/80 hover:bg-amber-300 text-amber-900 rounded-xl font-bold transition">🔓 ปลดล็อกแก้ไขเดือนนี้</button>
         </div>
 
-        <div id="loading" class="hidden px-5 py-10 text-center text-slate-500 text-sm">กำลังโหลด...</div>
-        <div id="errBox" class="hidden mx-5 mt-4 bg-red-50 border border-red-300 text-red-700 rounded-xl px-4 py-3 text-sm"></div>
+        <div id="loading" class="hidden px-5 py-12 text-center text-slate-500 text-sm">
+          <div class="inline-block w-7 h-7 border-3 border-sky-400 border-t-transparent rounded-full animate-spin mb-2"></div>
+          <div>กำลังโหลดข้อมูลบิล...</div>
+        </div>
+        <div id="errBox" class="hidden mx-5 mt-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl px-4 py-3 text-sm"></div>
 
         <!-- ตารางเหมือน Sheet -->
         <div class="overflow-x-auto">
-          <table class="w-full text-sm min-w-[640px]">
+          <table class="w-full text-sm min-w-[640px] hydro-table">
             <thead>
-              <tr class="bg-slate-50 text-slate-500 text-xs">
-                <th class="text-center font-bold px-3 py-3 w-12">#</th>
-                <th class="text-left font-bold px-3 py-3">รายการ</th>
-                <th class="text-right font-bold px-3 py-3 w-44">จำนวนเงิน (บาท)</th>
-                <th class="text-center font-bold px-3 py-3 w-28">จ่ายแล้ว</th>
-                <th class="text-center font-bold px-3 py-3 w-32">จัดการ</th>
+              <tr class="text-xs uppercase tracking-wider">
+                <th class="text-center font-bold px-3 py-3.5 w-12">#</th>
+                <th class="text-left font-bold px-3 py-3.5">รายการ</th>
+                <th class="text-right font-bold px-3 py-3.5 w-44">จำนวนเงิน (บาท)</th>
+                <th class="text-center font-bold px-3 py-3.5 w-28">จ่ายแล้ว</th>
+                <th class="text-center font-bold px-3 py-3.5 w-32">จัดการ</th>
               </tr>
             </thead>
             <tbody id="billBody"></tbody>
             <tfoot>
-              <tr class="bg-slate-800 text-white font-extrabold">
-                <td colspan="2" class="px-4 py-3">รวม</td>
-                <td id="footTotal" class="px-3 py-3 text-right tabular-nums">0</td>
-                <td id="footPaid" class="px-3 py-3 text-center tabular-nums">0</td>
-                <td id="footUnpaid" class="px-3 py-3 text-center text-xs font-bold" title="ยอดที่ยังต้องจ่าย">ค้าง 0</td>
+              <tr class="hydro-tfoot font-extrabold">
+                <td colspan="2" class="px-4 py-3.5">รวมทั้งสิ้น</td>
+                <td id="footTotal" class="px-3 py-3.5 text-right tabular-nums text-sky-300">0</td>
+                <td id="footPaid" class="px-3 py-3.5 text-center tabular-nums text-emerald-300">0</td>
+                <td id="footUnpaid" class="px-3 py-3.5 text-center text-xs font-bold text-rose-300" title="ยอดที่ยังต้องจ่าย">ค้าง 0</td>
               </tr>
             </tfoot>
           </table>
         </div>
 
         <!-- empty state -->
-        <div id="emptyBox" class="hidden px-6 py-10 text-center">
-          <div class="text-4xl mb-2">📭</div>
-          <p class="font-bold">เดือนนี้ยังไม่มีรายการ</p>
-          <p class="text-sm text-slate-500 mb-4">กดปุ่มด้านล่างเพื่อลอกชื่อ+ยอดจากเดือนล่าสุดมา (แบบ ก.) แล้วค่อยแก้ยอดนิดหน่อย</p>
-          <button id="emptyCopyBtn" class="px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700">📋 ลอกเดือนที่แล้วมาเลย</button>
+        <div id="emptyBox" class="hidden px-6 py-12 text-center">
+          <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-3xl">💧</div>
+          <p class="font-extrabold text-base text-slate-800">เดือนนี้ยังไม่มีรายการบิล</p>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1 mb-5 max-w-md mx-auto">กดปุ่มด้านล่างเพื่อลอกชื่อและยอดจากเดือนล่าสุดมาตั้งต้น แล้วค่อยปรับแก้ยอดที่เปลี่ยน</p>
+          <button id="emptyCopyBtn" class="px-5 py-2.5 btn-aqua text-sm font-bold rounded-xl">📋 ลอกเดือนที่แล้วมาเลย</button>
         </div>
 
-        <p class="px-5 py-3 text-xs text-slate-400 border-t">💡 วิธีใช้: แก้ยอดในช่องตัวเลขได้เลย (บันทึกอัตโนมัติ) → ติ๊ก ✅ เมื่อจ่ายแล้วแถวจะเขียว → ยอดบนสุดขยับทันที → เดือนใหม่กด “ลอกเดือนที่แล้วมา”</p>
+        <p class="px-5 py-3.5 text-xs text-slate-500 bg-sky-50/50 border-t border-sky-100">
+          💡 <b>วิธีใช้:</b> แก้ยอดในช่องตัวเลขได้เลย (บันทึกอัตโนมัติ) → ติ๊ก ✅ เมื่อจ่ายแล้วแถวจะเปลี่ยนสี → ยอดด้านบนคำนวณทันที → เดือนใหม่กด “ลอกเดือนที่แล้วมา”
+        </p>
       </div>
     </main>
 
     <!-- ===== Sidebar: ประวัติ + รายการหลัก ===== -->
     <aside class="space-y-6">
-      <section class="bg-white rounded-2xl shadow-sm border p-5">
-        <div class="flex items-center gap-2 mb-3">
-          <h2 class="font-extrabold">🗂️ ประวัติแยกเดือน</h2>
-          <span class="text-xs text-slate-400">(ที่ติ๊กแล้วเก็บไว้)</span>
+      <section class="hydro-card p-5">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-base">🗂️</span>
+            <div>
+              <h2 class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight">ประวัติแยกเดือน</h2>
+              <span class="text-[11px] text-slate-400">ที่ติ๊กจ่ายแล้วเก็บไว้ไม่หาย</span>
+            </div>
+          </div>
         </div>
-        <div id="historyList" class="space-y-2 text-sm"><div class="text-slate-400">กำลังโหลด...</div></div>
+        <div id="historyList" class="space-y-2.5 text-sm"><div class="text-slate-400 text-xs py-2">กำลังโหลด...</div></div>
       </section>
 
-      <section class="bg-white rounded-2xl shadow-sm border p-5">
-        <div class="flex items-center gap-2 mb-1">
-          <h2 class="font-extrabold">🧾 รายการหลัก (ล่าสุด)</h2>
+      <section class="hydro-card p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="w-8 h-8 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-base">🧾</span>
+          <div>
+            <h2 class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight">รายการหลัก (แม่แบบ)</h2>
+            <p class="text-[11px] text-slate-400">ใช้ลอกไปเดือนถัดไปอัตโนมัติ</p>
+          </div>
         </div>
-        <p class="text-xs text-slate-500 mb-3">ชื่อที่จำไว้ใช้ลอกเดือนหน้า เพิ่ม/แก้/ซ่อนตรงนี้ มีผลกับ<b>เดือนหน้า</b> ไม่ลบประวัติเดือนเก่า</p>
-        <div class="flex gap-2 mb-3">
-          <input id="tName" placeholder="ชื่อบิลใหม่ เช่น ค่าไฟ" class="flex-1 border rounded-lg px-3 py-2 text-sm">
-          <button id="tAddBtn" class="px-4 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700">เพิ่ม</button>
+        <p class="text-xs text-slate-500 mb-3">เพิ่ม/แก้/ซ่อนตรงนี้ มีผลกับ<b>เดือนหน้า</b> ไม่ลบประวัติเดือนเก่า</p>
+        <div class="flex gap-2 mb-3.5">
+          <input id="tName" placeholder="ชื่อบิลใหม่ เช่น ค่าไฟ" class="hydro-input flex-1">
+          <button id="tAddBtn" class="px-4 btn-aqua text-xs sm:text-sm font-bold rounded-xl shrink-0">＋ เพิ่ม</button>
         </div>
         <div id="templateList" class="space-y-2 text-sm"></div>
       </section>
 
-      <section class="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-sm">
-        <h2 class="font-extrabold mb-2">❓ ใช้ยังไง (สั้นๆ)</h2>
-        <ol class="list-decimal ml-5 space-y-1 text-slate-700">
+      <section class="hydro-card p-5 bg-gradient-to-br from-sky-50/90 to-white border-sky-200 text-sm">
+        <h2 class="font-extrabold text-slate-800 mb-2.5 flex items-center gap-1.5">
+          <span>🌊</span><span>ขั้นตอนใช้งานแบบเร็ว</span>
+        </h2>
+        <ol class="list-decimal ml-5 space-y-1.5 text-xs sm:text-sm text-slate-600">
           <li>ขึ้นเดือนใหม่ → กด <b>ลอกเดือนที่แล้วมา</b></li>
           <li>แก้ยอดที่เปลี่ยนในช่องตัวเลข</li>
-          <li>จ่ายรายการไหน → ติ๊ก ✅ แถวเขียว</li>
+          <li>จ่ายรายการไหน → ติ๊ก ✅ แถวเปลี่ยนสี</li>
           <li>มีบิลใหม่ → กด <b>＋ เพิ่มรายการ</b></li>
           <li>ชื่อผิด → กด <b>✏️</b> ในแถวนั้น</li>
         </ol>
@@ -157,21 +403,23 @@
     </aside>
   </div>
 
-  <footer class="text-center text-xs text-slate-400 mt-8 pb-6">เก็บข้อมูลใน Google Sheet ของคุณ · เปิดเว็บนี้บนคอมได้เลย ไม่ต้องติดตั้ง</footer>
+  <footer class="text-center text-xs text-slate-400 mt-10 pb-6">
+    เก็บข้อมูลใน Google Sheet ของคุณ · ดีไซน์โฉมใหม่สไตล์ Smart Hydro Tracker
+  </footer>
 </div>
 
 <!-- ===== Modal: เพิ่มรายการ ===== -->
 <div id="addModal" class="modal hidden">
   <div class="modal-card">
-    <h2 class="font-extrabold text-lg mb-1">＋ เพิ่มรายการใน <span id="addMonthLabel"></span></h2>
+    <h2 class="font-extrabold text-lg text-slate-900 mb-1">＋ เพิ่มรายการใน <span id="addMonthLabel" class="text-sky-600"></span></h2>
     <p class="text-xs text-slate-500 mb-4">จะเพิ่มทั้งในเดือนนี้ + จำในรายการหลักให้เดือนหน้าลอกไปด้วย</p>
-    <label class="text-xs text-slate-500">ชื่อรายการ</label>
-    <input id="addName" placeholder="เช่น ค่าไฟ" class="w-full border rounded-lg px-3 py-2 mb-3">
-    <label class="text-xs text-slate-500">ยอด (บาท)</label>
-    <input id="addAmount" type="number" min="0" step="0.01" value="0" class="w-full border rounded-lg px-3 py-2 mb-4">
+    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อรายการ</label>
+    <input id="addName" placeholder="เช่น ค่าไฟ" class="hydro-input mb-3">
+    <label class="block text-xs font-bold text-slate-600 mb-1">ยอด (บาท)</label>
+    <input id="addAmount" type="number" min="0" step="0.01" value="0" class="hydro-input mb-5">
     <div class="flex gap-2">
-      <button id="addConfirmBtn" class="flex-1 bg-green-600 text-white rounded-lg py-2 font-bold hover:bg-green-700">บันทึก</button>
-      <button data-close="addModal" class="px-5 bg-slate-200 rounded-lg hover:bg-slate-300">ยกเลิก</button>
+      <button id="addConfirmBtn" class="flex-1 btn-aqua rounded-xl py-2.5 font-bold">บันทึก</button>
+      <button data-close="addModal" class="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -179,17 +427,31 @@
 <!-- ===== Modal: แก้ชื่อในแถวนั้น ===== -->
 <div id="renameModal" class="modal hidden">
   <div class="modal-card">
-    <h2 class="font-extrabold text-lg mb-1">✏️ แก้ชื่อรายการ</h2>
+    <h2 class="font-extrabold text-lg text-slate-900 mb-1">✏️ แก้ชื่อรายการ</h2>
     <p class="text-xs text-slate-500 mb-4">ค่าเดิม: <span id="renameOld" class="font-bold text-slate-700"></span></p>
-    <label class="text-xs text-slate-500">ชื่อใหม่ (เฉพาะเดือนนี้)</label>
-    <input id="renameName" class="w-full border rounded-lg px-3 py-2 mb-3">
-    <label class="flex items-start gap-2 text-sm mb-4 cursor-pointer">
-      <input id="renameApplyAll" type="checkbox" class="mt-1" checked>
+    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อใหม่ (เฉพาะเดือนนี้)</label>
+    <input id="renameName" class="hydro-input mb-3">
+    <label class="flex items-start gap-2 text-sm mb-5 cursor-pointer text-slate-700">
+      <input id="renameApplyAll" type="checkbox" class="mt-1 accent-sky-600" checked>
       <span>ใช้ชื่อนี้กับ<b>เดือนหน้าด้วย</b> (อัปเดตรายการหลัก)</span>
     </label>
     <div class="flex gap-2">
-      <button id="renameConfirmBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2 font-bold hover:bg-blue-700">บันทึกชื่อ</button>
-      <button data-close="renameModal" class="px-5 bg-slate-200 rounded-lg hover:bg-slate-300">ยกเลิก</button>
+      <button id="renameConfirmBtn" class="flex-1 btn-aqua rounded-xl py-2.5 font-bold">บันทึกชื่อ</button>
+      <button data-close="renameModal" class="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: แก้ชื่อรายการหลัก (Template) ===== -->
+<div id="templateEditModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 class="font-extrabold text-lg text-slate-900 mb-1">✏️ แก้ชื่อในรายการหลัก</h2>
+    <p class="text-xs text-slate-500 mb-4">มีผลกับการลอกไปเดือนหน้า (ประวัติเดือนเก่าไม่เปลี่ยน)</p>
+    <label class="block text-xs font-bold text-slate-600 mb-1">ชื่อรายการหลัก</label>
+    <input id="templateEditName" class="hydro-input mb-5">
+    <div class="flex gap-2">
+      <button id="templateEditConfirmBtn" class="flex-1 btn-aqua rounded-xl py-2.5 font-bold">บันทึก</button>
+      <button data-close="templateEditModal" class="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -197,11 +459,23 @@
 <!-- ===== Modal: ยืนยันลอกเดือน ===== -->
 <div id="copyModal" class="modal hidden">
   <div class="modal-card">
-    <h2 class="font-extrabold text-lg mb-1">📋 ลอกเดือนที่แล้วมา?</h2>
-    <p id="copyDesc" class="text-sm text-slate-600 mb-4">...</p>
+    <h2 class="font-extrabold text-lg text-slate-900 mb-1">📋 ลอกเดือนที่แล้วมา?</h2>
+    <p id="copyDesc" class="text-sm text-slate-600 mb-5 leading-relaxed">...</p>
     <div class="flex gap-2">
-      <button id="copyConfirmBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2 font-bold hover:bg-blue-700">ลอกมาเลย</button>
-      <button data-close="copyModal" class="px-5 bg-slate-200 rounded-lg hover:bg-slate-300">ยกเลิก</button>
+      <button id="copyConfirmBtn" class="flex-1 btn-aqua rounded-xl py-2.5 font-bold">ลอกมาเลย</button>
+      <button data-close="copyModal" class="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: ยืนยันทั่วไป (แทน confirm ดั้งเดิม) ===== -->
+<div id="confirmActionModal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirmActionTitle" class="font-extrabold text-lg text-slate-900 mb-1">ยืนยันการทำรายการ</h2>
+    <p id="confirmActionDesc" class="text-sm text-slate-600 mb-5 whitespace-pre-line leading-relaxed"></p>
+    <div class="flex gap-2">
+      <button id="confirmActionOkBtn" class="flex-1 btn-aqua rounded-xl py-2.5 font-bold">ยืนยัน</button>
+      <button data-close="confirmActionModal" class="px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -209,28 +483,28 @@
 <!-- ===== Modal: ตั้งค่า ===== -->
 <div id="settingsModal" class="modal hidden">
   <div class="modal-card">
-    <h2 class="font-extrabold text-lg mb-1">⚙️ เชื่อมต่อ Google Sheet</h2>
+    <h2 class="font-extrabold text-lg text-slate-900 mb-1">⚙️ เชื่อมต่อ Google Sheet</h2>
     <p class="text-xs text-slate-500 mb-4">เว้นว่าง = โหมดทดลอง (เก็บในเครื่องนี้เท่านั้น)</p>
-    <label class="text-xs text-slate-500">Apps Script Web App URL</label>
-    <input id="sUrl" placeholder="https://script.google.com/..." class="w-full border rounded-lg px-3 py-2 mb-2 text-sm">
-    <label class="text-xs text-slate-500">API Key (ตรงกับ Script Properties)</label>
-    <input id="sKey" placeholder="รหัสลับ" class="w-full border rounded-lg px-3 py-2 mb-3 text-sm">
-    <div id="connResult" class="hidden text-sm rounded-lg px-3 py-2 mb-3"></div>
-    <div class="flex gap-2 mb-2">
-      <button id="testConnBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 rounded-lg py-2 text-sm font-bold">ทดสอบเชื่อมต่อ</button>
-      <button id="saveSettingsBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2 font-bold hover:bg-blue-700">บันทึก</button>
-      <button data-close="settingsModal" class="px-4 bg-slate-200 rounded-lg hover:bg-slate-300">ปิด</button>
+    <label class="block text-xs font-bold text-slate-600 mb-1">Apps Script Web App URL</label>
+    <input id="sUrl" placeholder="https://script.google.com/..." class="hydro-input mb-3">
+    <label class="block text-xs font-bold text-slate-600 mb-1">API Key (ตรงกับ Script Properties)</label>
+    <input id="sKey" placeholder="รหัสลับ" class="hydro-input mb-4">
+    <div id="connResult" class="hidden text-sm rounded-xl px-3.5 py-2.5 mb-3"></div>
+    <div class="flex gap-2 mb-3">
+      <button id="testConnBtn" class="flex-1 btn-soft rounded-xl py-2.5 text-sm font-bold">ทดสอบเชื่อมต่อ</button>
+      <button id="saveSettingsBtn" class="flex-1 btn-aqua rounded-xl py-2.5 font-bold">บันทึก</button>
+      <button data-close="settingsModal" class="px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">ปิด</button>
     </div>
-    <button id="resetDemoBtn" class="w-full text-xs text-slate-400 hover:text-red-500 mt-1">รีเซ็ตข้อมูลทดลองในเครื่องนี้</button>
+    <button id="resetDemoBtn" class="w-full text-xs text-slate-400 hover:text-rose-500 py-1 font-semibold transition">รีเซ็ตข้อมูลทดลองในเครื่องนี้</button>
   </div>
 </div>
 
 <div id="toast"></div>
 
-<script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/dashboard.js"></script>
-<script src="js/bills.js"></script>
-<script src="js/app.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/bills.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
