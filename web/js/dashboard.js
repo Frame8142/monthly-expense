@@ -1,4 +1,6 @@
-/* dashboard.js — วาดตารางเดือน + การ์ด 2 ยอด + ประวัติ (เว็บคอม) */
+/* =========================================================
+   3. dashboard.js — วาดตารางเดือน + การ์ด 3 ยอด + ประวัติ
+   ========================================================= */
 var Dashboard = (function () {
 
   function totals(rows) {
@@ -45,18 +47,18 @@ var Dashboard = (function () {
       body.innerHTML = sorted.map(function (r, i) {
         var dis = locked ? 'disabled' : '';
         return '<tr class="' + (r.paid ? 'paid' : '') + '">' +
-          '<td class="text-center px-3 py-3 text-slate-400">' + (i + 1) + '</td>' +
-          '<td class="px-3 py-3">' +
-            '<div class="font-bold ' + (r.paid ? 'line-through text-green-800' : '') + '">' + esc(r.bill_name) + '</div>' +
-            '<div class="text-xs text-slate-400">' + esc(r.bill_id || '') + (r.paid && r.paid_at ? ' · จ่าย ' + esc(String(r.paid_at).slice(0, 10)) : '') + '</div>' +
+          '<td class="text-center px-3 py-3.5 text-slate-400 font-semibold">' + (i + 1) + '</td>' +
+          '<td class="px-3 py-3.5">' +
+            '<div class="font-bold text-slate-800 ' + (r.paid ? 'line-through text-emerald-700' : '') + '">' + esc(r.bill_name) + '</div>' +
+            '<div class="text-xs text-slate-400 mt-0.5">' + esc(r.bill_id || '') + (r.paid && r.paid_at ? ' · จ่าย ' + esc(String(r.paid_at).slice(0, 10)) : '') + '</div>' +
           '</td>' +
-          '<td class="px-3 py-3 text-right">' +
+          '<td class="px-3 py-3.5 text-right">' +
             '<input type="text" inputmode="decimal" class="amt-input tabular-nums" data-amt="' + esc(r.bill_id) + '" value="' + esc(fmt(r.amount)) + '" ' + dis + ' title="แก้ยอดได้เลย บันทึกอัตโนมัติ">' +
           '</td>' +
-          '<td class="px-3 py-3 text-center">' +
+          '<td class="px-3 py-3.5 text-center">' +
             '<input type="checkbox" class="tick" data-tick="' + esc(r.bill_id) + '" ' + (r.paid ? 'checked' : '') + ' ' + dis + ' title="ติ๊กเมื่อจ่ายแล้ว">' +
           '</td>' +
-          '<td class="px-3 py-3 text-center whitespace-nowrap">' +
+          '<td class="px-3 py-3.5 text-center whitespace-nowrap">' +
             '<button class="row-btn btn-edit" data-rename="' + esc(r.bill_id) + '" ' + dis + '>✏️</button> ' +
             '<button class="row-btn btn-del" data-delrow="' + esc(r.bill_id) + '" ' + dis + '>ลบ</button>' +
           '</td>' +
@@ -64,7 +66,6 @@ var Dashboard = (function () {
       }).join('');
     }
 
-    // wire events (ผูกใหม่ทุกครั้งที่วาด กัน handler ซ้ำ)
     body.querySelectorAll('[data-tick]').forEach(function (cb) {
       cb.addEventListener('change', function () { opts.onToggle && opts.onToggle(cb.getAttribute('data-tick'), cb.checked); });
     });
@@ -96,21 +97,21 @@ var Dashboard = (function () {
   function renderHistory(items, currentMonthStr, handlers) {
     handlers = handlers || {};
     var box = document.getElementById('historyList');
-    if (!items || !items.length) { box.innerHTML = '<div class="text-slate-400">ยังไม่มีประวัติ</div>'; return; }
+    if (!items || !items.length) { box.innerHTML = '<div class="text-slate-400 text-xs">ยังไม่มีประวัติ</div>'; return; }
     var sorted = items.slice().sort(function (a, b) { return String(b.month).localeCompare(String(a.month)); });
     box.innerHTML = sorted.map(function (d) {
       var isCur = d.month === currentMonthStr;
       var pct = d.total > 0 ? Math.round(d.paid / d.total * 100) : 100;
-      return '<div class="border rounded-xl overflow-hidden ' + (isCur ? 'border-blue-400 ring-1 ring-blue-200' : '') + '">' +
-        '<button class="w-full text-left px-3 py-2 hover:bg-slate-50" data-hist="' + esc(d.month) + '">' +
+      return '<div class="hist-item overflow-hidden ' + (isCur ? 'active-month' : '') + '">' +
+        '<button class="w-full text-left px-3.5 py-2.5" data-hist="' + esc(d.month) + '">' +
           '<div class="flex justify-between items-center gap-2">' +
-            '<span class="font-bold">' + esc(monthShort(d.month)) + (isCur ? ' <span class="text-[10px] text-blue-600">● ดูอยู่</span>' : '') + '</span>' +
-            '<span class="tabular-nums font-bold">' + esc(fmt(d.total)) + '</span>' +
+            '<span class="font-bold text-slate-800">' + esc(monthShort(d.month)) + (isCur ? ' <span class="text-[10px] font-extrabold text-sky-600 bg-sky-100 px-2 py-0.5 rounded-full ml-1">● ดูอยู่</span>' : '') + '</span>' +
+            '<span class="tabular-nums font-extrabold text-slate-900">' + esc(fmt(d.total)) + '</span>' +
           '</div>' +
-          '<div class="h-1.5 bg-slate-200 rounded-full mt-1.5"><div class="h-1.5 bg-green-500 rounded-full" style="width:' + pct + '%"></div></div>' +
-          '<div class="text-xs text-slate-500 mt-1">จ่าย ' + esc(fmt(d.paid)) + ' · ค้าง ' + esc(fmt(d.unpaid)) + ' · ' + d.paidCount + '/' + d.count + (d.done ? ' ✓' : '') + '</div>' +
+          '<div class="h-1.5 bg-sky-100 rounded-full mt-2 overflow-hidden"><div class="h-1.5 bg-gradient-to-r from-sky-400 to-blue-600 rounded-full" style="width:' + pct + '%"></div></div>' +
+          '<div class="text-xs text-slate-500 mt-1.5">จ่าย ' + esc(fmt(d.paid)) + ' · ค้าง ' + esc(fmt(d.unpaid)) + ' · ' + d.paidCount + '/' + d.count + (d.done ? ' ✅' : '') + '</div>' +
         '</button>' +
-        '<div id="hist-' + esc(d.month) + '" class="hidden px-3 pb-2 hist-detail mx-2 mb-2 p-2"></div>' +
+        '<div id="hist-' + esc(d.month) + '" class="hidden px-3 pb-2.5 hist-detail mx-2.5 mb-2.5 p-2.5"></div>' +
       '</div>';
     }).join('');
 
@@ -125,8 +126,8 @@ var Dashboard = (function () {
         (handlers.onExpand ? handlers.onExpand(m) : Promise.resolve([])).then(function (rows) {
           if (!rows || !rows.length) { detail.innerHTML = '<div class="text-xs text-slate-400">ไม่มีรายการ</div>'; return; }
           detail.innerHTML = rows.map(function (r) {
-            return '<div class="hist-row text-xs"><span>' + (r.paid ? '✅ ' : '⬜ ') + esc(r.bill_name) + '</span><span class="tabular-nums font-bold">' + esc(fmt(r.amount)) + '</span></div>';
-          }).join('') + '<button class="text-xs text-blue-600 font-bold mt-1" data-jump="' + esc(m) + '">→ เปิดเดือนนี้</button>';
+            return '<div class="hist-row text-xs"><span class="text-slate-700">' + (r.paid ? '✅ ' : '⬜ ') + esc(r.bill_name) + '</span><span class="tabular-nums font-bold text-slate-900">' + esc(fmt(r.amount)) + '</span></div>';
+          }).join('') + '<button class="text-xs text-sky-600 hover:text-sky-700 font-bold mt-2 inline-block" data-jump="' + esc(m) + '">→ เปิดเดือนนี้</button>';
           detail.querySelectorAll('[data-jump]').forEach(function (j) {
             j.addEventListener('click', function (e) { e.stopPropagation(); handlers.onJump && handlers.onJump(j.getAttribute('data-jump')); });
           });
